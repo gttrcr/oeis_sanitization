@@ -107,7 +107,7 @@ namespace oeis_sanitization
             return ret;
         }
 
-        public static void Sanification(List<RDb> oeisDb)
+        public static void Sanitization(List<RDb> oeisDb)
         {
             Console.WriteLine("Broken links...");
             List<Tuple<RDb, List<string>>> broken = new List<Tuple<RDb, List<string>>>();
@@ -215,8 +215,8 @@ namespace oeis_sanitization
         {
             string db_json = "db.json";
 
-            Console.WriteLine("Creating " + db_json);
-            CreateOeisDbJson(db_json);
+            //Console.WriteLine("Creating " + db_json);
+            //CreateOeisDbJson(db_json);
 
             Console.WriteLine("Reading db.json...");
             int windowSize = 300;
@@ -277,7 +277,7 @@ namespace oeis_sanitization
             }
             Console.WriteLine("Done");
 
-            Sanification(oeisDb);
+            Sanitization(oeisDb);
         }
     }
 }
