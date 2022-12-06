@@ -75,7 +75,7 @@ namespace oeis_sanitization
             return extractDateRegex.Matches(str).Cast<Match>().Select(m => m.Value).ToList();
         }
 
-        public static List<string> BrokenLinks(RDb rDb)
+        public static List<string> AllLinks(RDb rDb)
         {
             List<string> list = new List<string>();
             list.AddRange(LinkExtractor(rDb.id));
@@ -94,8 +94,13 @@ namespace oeis_sanitization
             list.AddRange(LinkExtractor(rDb.author));
             list.AddRange(LinkExtractor(rDb.keyword));
 
+            return list;
+        }
+
+        public static List<string> BrokenLinks(List<string> links)
+        {
             List<string> ret = new List<string>();
-            Parallel.ForEach(list, new ParallelOptions() { MaxDegreeOfParallelism = 7 }, index =>
+            Parallel.ForEach(links, new ParallelOptions() { MaxDegreeOfParallelism = 7 }, index =>
             {
                 if (!Utils.IsLinkWorking(index))
                 {
@@ -111,9 +116,10 @@ namespace oeis_sanitization
         {
             Console.WriteLine("Broken links...");
             List<Tuple<RDb, List<string>>> broken = new List<Tuple<RDb, List<string>>>();
-            broken = oeisDb.GetRange(0, 500).AsParallel().Select(x => new Tuple<RDb, List<string>>(x, BrokenLinks(x))).Where(x => x.Item2.Count > 0).ToList();
+            broken = oeisDb.Select(x => new Tuple<RDb, List<string>>(x, AllLinks(x))).Where(x => x.Item2.Count > 0).ToList();
+            broken = broken.GetRange(0, 1000).Select(x => new Tuple<RDb, List<string>>(x.Item1, BrokenLinks(x.Item2))).Where(x => x.Item2.Count > 0).ToList();
             MarkdownPage("Sequences that contains broken links", "broken_links",
-                broken.Select(x => x.Item1).ToList(),//list of sequences
+                broken.Select(x => x.Item1).ToList(), //list of sequences
                 1,
                 broken.Select(x => x.Item2.Select(y => "[" + y + "](" + y + ")").ToList()).ToList(),  //list of broken links for every sequence
                 new List<string>() { "Links" });
@@ -213,6 +219,7 @@ namespace oeis_sanitization
 
         public static void Main()
         {
+            //https://oeis.org/A000010/a000010_5M.7z
             string db_json = "db.json";
 
             //Console.WriteLine("Creating " + db_json);
