@@ -40,10 +40,10 @@ namespace oeis_sanitization
 
         public static bool IsLinkWorking(string url)
         {
-            HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(url);
-            request.AllowAutoRedirect = true;
             try
             {
+                HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(url);
+                request.AllowAutoRedirect = true;
                 HttpWebResponse response = (HttpWebResponse)request.GetResponse();
                 if (response.StatusCode == HttpStatusCode.OK)
                 {
