@@ -117,7 +117,7 @@ namespace oeis_sanitization
             Console.WriteLine("Broken links...");
             List<Tuple<RDb, List<string>>> broken = new List<Tuple<RDb, List<string>>>();
             broken = oeisDb.Select(x => new Tuple<RDb, List<string>>(x, AllLinks(x))).Where(x => x.Item2.Count > 0).ToList();
-            broken = broken.GetRange(0, 1000).Select(x => new Tuple<RDb, List<string>>(x.Item1, BrokenLinks(x.Item2))).Where(x => x.Item2.Count > 0).ToList();
+            broken = broken.Select(x => new Tuple<RDb, List<string>>(x.Item1, BrokenLinks(x.Item2))).Where(x => x.Item2.Count > 0).ToList();
             MarkdownPage("Sequences that contains broken links", "broken_links",
                 broken.Select(x => x.Item1).ToList(), //list of sequences
                 1,
