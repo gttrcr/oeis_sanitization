@@ -100,12 +100,12 @@ namespace oeis_sanitization
         public static List<string> BrokenLinks(List<string> links)
         {
             List<string> ret = new List<string>();
-            Parallel.ForEach(links, new ParallelOptions() { MaxDegreeOfParallelism = 7 }, index =>
+            Parallel.ForEach(links, new ParallelOptions() { MaxDegreeOfParallelism = 8 }, link =>
             {
-                if (!Utils.IsLinkWorking(index))
+                if (!link.Contains("arxiv.org") && !Utils.IsLinkWorking(link))
                 {
-                    Console.WriteLine(index);
-                    ret.Add(index);
+                    Console.WriteLine(link);
+                    ret.Add(link);
                 }
             });
 
@@ -114,10 +114,15 @@ namespace oeis_sanitization
 
         public static void Sanitization(List<RDb> oeisDb)
         {
+            int index = 0;
             Console.WriteLine("Broken links...");
             List<Tuple<RDb, List<string>>> broken = new List<Tuple<RDb, List<string>>>();
             broken = oeisDb.Select(x => new Tuple<RDb, List<string>>(x, AllLinks(x))).Where(x => x.Item2.Count > 0).ToList();
-            broken = broken.Select(x => new Tuple<RDb, List<string>>(x.Item1, BrokenLinks(x.Item2))).Where(x => x.Item2.Count > 0).ToList();
+            broken = broken.AsParallel().Select(x =>
+            {
+                Console.WriteLine(index++ + "/" + broken.Count);
+                return new Tuple<RDb, List<string>>(x.Item1, BrokenLinks(x.Item2));
+            }).Where(x => x.Item2.Count > 0).ToList();
             MarkdownPage("Sequences that contains broken links", "broken_links",
                 broken.Select(x => x.Item1).ToList(), //list of sequences
                 1,
