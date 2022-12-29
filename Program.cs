@@ -2,7 +2,6 @@
 using Newtonsoft.Json.Linq;
 using System.Text.RegularExpressions;
 using System.Text;
-//using NetWolf;
 
 namespace oeis_sanitization
 {
@@ -23,8 +22,8 @@ namespace oeis_sanitization
                 JObject? j = JObject.Parse(Utils.Get("https://oeis.org/search?q=id:" + x + "&fmt=json"));
                 if (j != null)
                     if (j["result"] != null)
-                        if (j["result"]?.Count() > 0)
-                            return (JObject)(j["results"][0]);
+                        if (j["result"]?.Count() > 0 && j?["results"]?[0] != null)
+                            return (JObject?)(j?["results"]?[0]);
                 throw new Exception();
             }).ToList();
             string str = JsonConvert.SerializeObject(db);
@@ -102,7 +101,7 @@ namespace oeis_sanitization
             List<string> ret = new List<string>();
             Parallel.ForEach(links, new ParallelOptions() { MaxDegreeOfParallelism = 8 }, link =>
             {
-                if (!link.Contains("arxiv.org") && !Utils.IsLinkWorking(link))
+                if (!link.ToLower().Contains("arxiv.org") && !Utils.IsLinkWorking(link))
                 {
                     Console.WriteLine(link);
                     ret.Add(link);
@@ -224,16 +223,14 @@ namespace oeis_sanitization
 
         public static void Main()
         {
-            //https://oeis.org/A000010/a000010_5M.7z
             string db_json = "db.json";
 
             //Console.WriteLine("Creating " + db_json);
             //CreateOeisDbJson(db_json);
 
             Console.WriteLine("Reading db.json...");
-            int windowSize = 300;
             string file = File.ReadAllText(db_json);
-            List<PDb> pDb = new List<PDb>();
+            List<PDb>? pDb = new List<PDb>();
             try
             {
                 pDb = JsonConvert.DeserializeObject<List<PDb>>(file);
@@ -243,7 +240,6 @@ namespace oeis_sanitization
                 Console.WriteLine(ex.Message);
                 Console.WriteLine(ex.LineNumber);
                 Console.WriteLine(ex.LinePosition);
-                Console.WriteLine(file.Substring(ex.LinePosition - windowSize, windowSize));
                 return;
             }
             catch (JsonReaderException ex)
@@ -251,7 +247,6 @@ namespace oeis_sanitization
                 Console.WriteLine(ex.Message);
                 Console.WriteLine(ex.LineNumber);
                 Console.WriteLine(ex.LinePosition);
-                Console.WriteLine(file.Substring(ex.LinePosition - windowSize, windowSize));
                 return;
             }
             Console.WriteLine("Done");
