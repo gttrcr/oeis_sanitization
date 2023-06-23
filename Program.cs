@@ -14,7 +14,6 @@ namespace oeis_sanitization
             int count = 0;
             List<string> sequences = File.ReadAllLines("names").Where(x => x.StartsWith('A')).ToList();
             sequences = sequences.Select(x => x.Split(' ')[0]).ToList();
-            sequences = sequences.GetRange(0, 10);
             DateTime now = DateTime.Now;
             List<JObject?> db = sequences.AsParallel().Select(x =>
             {
@@ -24,13 +23,13 @@ namespace oeis_sanitization
                 string body = Utils.Get("https://oeis.org/search?q=id:" + x + "&fmt=json");
                 if (string.IsNullOrEmpty(body))
                     return null;
-                
+
                 JObject? j = JObject.Parse(body);
                 if (j != null)
                     if (j["results"] != null)
                         if (j["results"]?.Count() > 0 && j["results"]?[0] != null)
                             return (JObject?)(j?["results"]?[0]);
-                
+
                 return null;
             }).ToList();
             string str = JsonConvert.SerializeObject(db);
