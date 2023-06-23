@@ -35,6 +35,8 @@ namespace oeis_sanitization
                 }
             }
 
+            if (!Directory.Exists("oeis_mds"))
+                Directory.CreateDirectory("oeis_mds");
             File.WriteAllText("oeis_mds/" + mdFile + ".md", md.ToString());
         }
 
