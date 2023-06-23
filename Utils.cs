@@ -10,8 +10,10 @@ namespace oeis_sanitization
         public static void Download(string uri)
         {
             HttpResponseMessage response = new HttpClient().GetAsync(new Uri(uri)).Result;
-            using (var fs = new FileStream("names.gz", FileMode.CreateNew))
-                response.Content.CopyToAsync(fs).Wait();
+            FileStream fs = new FileStream("names.gz", FileMode.CreateNew);
+            response.Content.CopyToAsync(fs).Wait();
+            fs.Close();
+            fs.Dispose();
         }
 
         public static void Decompress(FileInfo fileToDecompress)
@@ -28,14 +30,19 @@ namespace oeis_sanitization
 
         public static string Get(string uri)
         {
-            using (var client = new HttpClient())
+            HttpClient client = new HttpClient();
+            try
             {
                 HttpResponseMessage response = client.GetAsync(uri).Result;
                 if (response.IsSuccessStatusCode)
                     return response.Content.ReadAsStringAsync().Result;
             }
+            catch
+            {
+                return string.Empty;
+            }
 
-            throw new Exception();
+            return string.Empty;
         }
 
         public static bool IsLinkWorking(string url)

@@ -5,7 +5,7 @@ namespace oeis_sanitization
 {
     public class Program
     {
-        public static void CreateOeisDbJson(string db_json)
+        public static void CreateOeisDbJson(string dbJson)
         {
             File.Delete("names");
             File.Delete("names.gz");
@@ -14,18 +14,27 @@ namespace oeis_sanitization
             int count = 0;
             List<string> sequences = File.ReadAllLines("names").Where(x => x.StartsWith('A')).ToList();
             sequences = sequences.Select(x => x.Split(' ')[0]).ToList();
+            sequences = sequences.GetRange(0, 10);
+            DateTime now = DateTime.Now;
             List<JObject?> db = sequences.AsParallel().Select(x =>
             {
-                Console.WriteLine(100 * (++count) / (float)(sequences.Count));
-                JObject? j = JObject.Parse(Utils.Get("https://oeis.org/search?q=id:" + x + "&fmt=json"));
+                double percentage = 100 * (++count) / (float)(sequences.Count);
+                TimeSpan estimateEnd = 100 * (DateTime.Now - now) / percentage;
+                Console.WriteLine(percentage + "\tdd " + estimateEnd.Days + " h " + estimateEnd.Hours + " m " + estimateEnd.Minutes + " s " + estimateEnd.Seconds);
+                string body = Utils.Get("https://oeis.org/search?q=id:" + x + "&fmt=json");
+                if (string.IsNullOrEmpty(body))
+                    return null;
+                
+                JObject? j = JObject.Parse(body);
                 if (j != null)
-                    if (j["result"] != null)
-                        if (j["result"]?.Count() > 0 && j?["results"]?[0] != null)
+                    if (j["results"] != null)
+                        if (j["results"]?.Count() > 0 && j["results"]?[0] != null)
                             return (JObject?)(j?["results"]?[0]);
-                throw new Exception();
+                
+                return null;
             }).ToList();
             string str = JsonConvert.SerializeObject(db);
-            File.WriteAllText(db_json, str);
+            File.WriteAllText(dbJson, str);
         }
 
         public static void Sanitization(List<RDb> oeisDb)
@@ -124,13 +133,13 @@ namespace oeis_sanitization
 
         public static void Main()
         {
-            string db_json = "db.json";
+            string dbJson = "db.json";
 
-            //Console.WriteLine("Creating " + db_json);
-            //CreateOeisDbJson(db_json);
+            Console.WriteLine("Creating " + dbJson);
+            CreateOeisDbJson(dbJson);
 
             Console.WriteLine("Reading db.json...");
-            string file = File.ReadAllText(db_json);
+            string file = File.ReadAllText(dbJson);
             List<PDb>? pDb = new List<PDb>();
             try
             {
