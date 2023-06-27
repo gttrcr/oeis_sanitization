@@ -15,6 +15,7 @@ namespace oeis_sanitization
             List<string> sequences = File.ReadAllLines("names").Where(x => x.StartsWith('A')).ToList();
             sequences = sequences.Select(x => x.Split(' ')[0]).ToList();
             DateTime now = DateTime.Now;
+            int errors = 0;
             List<JObject?> db = sequences.AsParallel().Select(x =>
             {
                 double percentage = 100 * (++count) / (float)(sequences.Count);
@@ -30,9 +31,11 @@ namespace oeis_sanitization
                         if (j["results"]?.Count() > 0 && j["results"]?[0] != null)
                             return (JObject?)(j?["results"]?[0]);
 
+                errors++;
                 return null;
             }).ToList();
             string str = JsonConvert.SerializeObject(db);
+            Console.WriteLine("Completed with " + errors + " errors");
             File.WriteAllText(dbJson, str);
         }
 
