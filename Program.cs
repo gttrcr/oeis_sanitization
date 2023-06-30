@@ -14,28 +14,27 @@ namespace oeis_sanitization
             int count = 0;
             List<string> sequences = File.ReadAllLines("names").Where(x => x.StartsWith('A')).ToList();
             sequences = sequences.Select(x => x.Split(' ')[0]).ToList();
-            DateTime now = DateTime.Now;
-            int errors = 0;
-            List<JObject?> db = sequences.AsParallel().Select(x =>
+            DateTime startDt = DateTime.Now;
+            List<JObject?> db = new List<JObject?>();
+            for (int i = 0; i < sequences.Count; i++)
             {
+                string sequence = sequences[i];
                 double percentage = 100 * (++count) / (float)(sequences.Count);
-                TimeSpan estimateEnd = 100 * (DateTime.Now - now) / percentage;
+                TimeSpan estimateEnd = 100 * (DateTime.Now - startDt) / percentage;
                 Console.WriteLine(percentage + "\tdd " + estimateEnd.Days + " h " + estimateEnd.Hours + " m " + estimateEnd.Minutes + " s " + estimateEnd.Seconds);
-                string body = Utils.Get("https://oeis.org/search?q=id:" + x + "&fmt=json");
+                string body = Utils.Get("https://oeis.org/search?q=id:" + sequence + "&fmt=json");
                 if (string.IsNullOrEmpty(body))
-                    return null;
+                    continue;
 
                 JObject? j = JObject.Parse(body);
                 if (j != null)
                     if (j["results"] != null)
                         if (j["results"]?.Count() > 0 && j["results"]?[0] != null)
-                            return (JObject?)(j?["results"]?[0]);
-
-                errors++;
-                return null;
-            }).ToList();
+                            db.Add((JObject?)(j?["results"]?[0]));
+            }
+            
             string str = JsonConvert.SerializeObject(db);
-            Console.WriteLine("Completed with " + errors + " errors");
+            Console.WriteLine("Completed with " + (sequences.Count - db.Count).ToString() + " errors");
             File.WriteAllText(dbJson, str);
         }
 
