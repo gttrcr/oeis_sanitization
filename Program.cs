@@ -16,23 +16,24 @@ namespace oeis_sanitization
             sequences = sequences.Select(x => x.Split(' ')[0]).ToList();
             DateTime startDt = DateTime.Now;
             List<JObject?> db = new List<JObject?>();
-            for (int i = 0; i < sequences.Count; i++)
+            //for (int i = 0; i < sequences.Count; i++)
+            Parallel.For(0, sequences.Count, i =>
             {
                 string sequence = sequences[i];
                 double percentage = 100 * (++count) / (float)(sequences.Count);
                 TimeSpan estimateEnd = 100 * (DateTime.Now - startDt) / percentage;
                 Console.WriteLine(percentage + "\tdd " + estimateEnd.Days + " h " + estimateEnd.Hours + " m " + estimateEnd.Minutes + " s " + estimateEnd.Seconds);
                 string body = Utils.Get("https://oeis.org/search?q=id:" + sequence + "&fmt=json");
-                if (string.IsNullOrEmpty(body))
-                    continue;
+                if (!string.IsNullOrEmpty(body))
+                {
+                    JObject? j = JObject.Parse(body);
+                    if (j != null)
+                        if (j["results"] != null)
+                            if (j["results"]?.Count() > 0 && j["results"]?[0] != null)
+                                db.Add((JObject?)(j?["results"]?[0]));
+                }
+            });
 
-                JObject? j = JObject.Parse(body);
-                if (j != null)
-                    if (j["results"] != null)
-                        if (j["results"]?.Count() > 0 && j["results"]?[0] != null)
-                            db.Add((JObject?)(j?["results"]?[0]));
-            }
-            
             string str = JsonConvert.SerializeObject(db);
             Console.WriteLine("Completed with " + (sequences.Count - db.Count).ToString() + " errors");
             File.WriteAllText(dbJson, str);
