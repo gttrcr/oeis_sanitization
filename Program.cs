@@ -17,20 +17,21 @@ namespace oeis_sanitization
             DateTime startDt = DateTime.Now;
             List<JObject?> db = new List<JObject?>();
             //for (int i = 0; i < sequences.Count; i++)
-            Parallel.For(0, sequences.Count, i =>
+            Parallel.For(0, sequences.Count, new ParallelOptions() { MaxDegreeOfParallelism = 8 }, i =>
             {
                 string sequence = sequences[i];
                 double percentage = 100 * (++count) / (float)(sequences.Count);
-                TimeSpan estimateEnd = 100 * (DateTime.Now - startDt) / percentage;
-                Console.WriteLine(percentage + "\tdd " + estimateEnd.Days + " h " + estimateEnd.Hours + " m " + estimateEnd.Minutes + " s " + estimateEnd.Seconds);
+                TimeSpan estimateEnd = (100 - percentage) * (DateTime.Now - startDt) / percentage;
+                Console.WriteLine(percentage + "\t" + estimateEnd.Days + "dd " + estimateEnd.Hours + "h " + estimateEnd.Minutes + "m " + estimateEnd.Seconds + "s");
                 string body = Utils.Get("https://oeis.org/search?q=id:" + sequence + "&fmt=json");
                 if (!string.IsNullOrEmpty(body))
                 {
                     JObject? j = JObject.Parse(body);
-                    if (j != null)
-                        if (j["results"] != null)
-                            if (j["results"]?.Count() > 0 && j["results"]?[0] != null)
-                                db.Add((JObject?)(j?["results"]?[0]));
+                    bool ok = (j != null) && (j["results"] != null) && (j["results"]?.Count() > 0) && (j["results"]?[0] != null);
+                    if (ok)
+                        db.Add((JObject?)(j?["results"]?[0]));
+                    else
+                        Console.WriteLine("ERROR");
                 }
             });
 
@@ -137,8 +138,14 @@ namespace oeis_sanitization
         {
             string dbJson = "db.json";
 
-            Console.WriteLine("Creating " + dbJson);
-            CreateOeisDbJson(dbJson);
+            if ((DateTime.Now - File.GetCreationTime(dbJson)).TotalDays < 2 && false)
+                Console.WriteLine(dbJson + " has been created less then 2 days ago");
+            else
+            {
+                Console.WriteLine("Creating " + dbJson + "...");
+                CreateOeisDbJson(dbJson);
+                Console.WriteLine("Done");
+            }
 
             Console.WriteLine("Reading db.json...");
             string file = File.ReadAllText(dbJson);
