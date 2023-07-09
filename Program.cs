@@ -16,7 +16,6 @@ namespace oeis_sanitization
             sequences = sequences.Select(x => x.Split(' ')[0]).ToList();
             DateTime startDt = DateTime.Now;
             List<JObject?> db = new List<JObject?>();
-            //for (int i = 0; i < sequences.Count; i++)
             Parallel.For(0, sequences.Count, new ParallelOptions() { MaxDegreeOfParallelism = 8 }, i =>
             {
                 string sequence = sequences[i];
@@ -42,104 +41,30 @@ namespace oeis_sanitization
 
         public static void Sanitization(List<RDb> oeisDb)
         {
-            Console.WriteLine("Broken links...");
-            Processes.BrokenLinks(ref oeisDb);
-            Console.WriteLine("Done");
-
-            Console.WriteLine("Done deprecated keyword...");
-            Processes.DoneDeprecatedKeyword(ref oeisDb);
-            Console.WriteLine("Done");
-
-            //Console.WriteLine("Dupe deprecated keyword...");
-            //subset = oeisDb.AsParallel().Where(x => x.keyword.Contains("dupe")).ToList();
-            //MarkdownPage("Sequences with dupe deprecated keyword", "dupe_keyword", subset, 3);
-            //Console.WriteLine("Done");
-            //
-            //Console.WriteLine("Huge deprecated keyword...");
-            //subset = oeisDb.AsParallel().Where(x => x.keyword.Contains("huge")).ToList();
-            //MarkdownPage("Sequences with huge deprecated keyword", "huge_keyword", subset, 3);
-            //Console.WriteLine("Done");
-            //
-            //Console.WriteLine("Look deprecated keyword...");
-            //subset = oeisDb.AsParallel().Where(x => x.keyword.Contains("look")).ToList();
-            //MarkdownPage("Sequences with look deprecated keyword", "look_keywords", subset, 3);
-            //Console.WriteLine("Done");
-            //
-            //Console.WriteLine("Part deprecated keyword...");
-            //subset = oeisDb.AsParallel().Where(x => x.keyword.Contains("part")).ToList();
-            //MarkdownPage("Sequences with part deprecated keyword", "part_keywords", subset, 3);
-            //Console.WriteLine("Done");
-            //
-            //Console.WriteLine("Uned sequences...");
-            //subset = oeisDb.AsParallel().Where(x => x.keyword.Contains("uned")).ToList();
-            //MarkdownPage("Uned sequences", "uned_sequences", subset, 3);
-            //Console.WriteLine("Done");
-            //
-            //Console.WriteLine("Obsc deprecated keyword...");
-            //subset = oeisDb.AsParallel().Where(x => x.keyword.Contains("obsc")).ToList();
-            //MarkdownPage("Obscure sequences", "obsc_sequences", subset, 3);
-            //Console.WriteLine("Done");
-            //
-            //Console.WriteLine("Need mode terms...");
-            //subset = oeisDb.AsParallel().Where(x => x.keyword.Contains("more")).ToList();
-            //MarkdownPage("Sequences that needs more terms", "need_more_terms", subset, 3);
-            //Console.WriteLine("Done");
-            //
-            //Console.WriteLine("Allocated...");
-            //subset = oeisDb.AsParallel().Where(x => x.name.StartsWith("allocated for")).ToList();
-            //MarkdownPage("Allocated sequences", "allocated", subset, 3);
-            //Console.WriteLine("Done");
-            //
-            //Console.WriteLine("Maple code...");
-            //subset = oeisDb.AsParallel().Where(x => x.maple.Count == 0).ToList();
-            //MarkdownPage("Sequences that needs maple code", "need_maple", subset, 3);
-            //Console.WriteLine("Done");
-            //
-            //Console.WriteLine("Mathematica code...");
-            //subset = oeisDb.AsParallel().Where(x => x.mathematica.Count == 0).ToList();
-            //MarkdownPage("Sequences that needs mathematica code", "need_mathematica", subset, 3);
-            //Console.WriteLine("Done");
-            //
-            //Console.WriteLine("Some examples...");
-            //subset = oeisDb.AsParallel().Where(x => x.example.Count == 0).ToList();
-            //MarkdownPage("Sequences that needs examples", "need_examples", subset, 3);
-            //Console.WriteLine("Done");
-            //
-            //Console.WriteLine("Unknown...");
-            //subset = oeisDb.AsParallel().Where(x => x.keyword.Contains("unkn")).ToList();
-            //MarkdownPage("Unknown sequences", "need_knowledge", subset, 3);
-            //Console.WriteLine("Done");
-            //
-            //Console.WriteLine("Dead...");
-            //subset = oeisDb.AsParallel().Where(x => x.keyword.Contains("dead")).ToList();
-            //MarkdownPage("Dead sequences", "dead", subset, 3);
-            //Console.WriteLine("Done");
-
-            //Console.WriteLine("Mathematica error...");
-            //Link link = new Link();
-            //int index = 0;
-            //subset = oeisDb.Where(x =>
-            //{
-            //    if (x.mathematica.Count > 0)
-            //    {
-            //        Console.WriteLine(index++);
-            //        string query = string.Join(";", x.mathematica) + ";" + "Table[a[n], {n, " + x.offset[0] + ", " + (x.data.Count - 1 + int.Parse(x.offset[0])) + "}]";
-            //        string text = link.Engine.Execute(query).Text;
-            //        return text == "(" + string.Join(", ", x.data) + ")";
-            //    }
-            //
-            //    return false;
-            //}).ToList();
-            //MarkdownPage("Sequences that needs mathematica code", "mathematica_error", subset);
-            //Console.WriteLine("Done");
+            Processes.BrokenLinks(oeisDb);
+            Processes.DoneDeprecatedKeyword(oeisDb);
+            Processes.DupeDeprecatedKeyword(oeisDb);
+            Processes.HugeDeprecatedKeyword(oeisDb);
+            Processes.LookDeprecatedKeyword(oeisDb);
+            Processes.PartDeprecatedKeyword(oeisDb);
+            Processes.UnedSequences(oeisDb);
+            Processes.ObscDeprecatedKeyword(oeisDb);
+            Processes.NeedMoreTerms(oeisDb);
+            Processes.Allocated(oeisDb);
+            Processes.MapleCode(oeisDb);
+            Processes.MathematicaCode(oeisDb);
+            Processes.SomeExamples(oeisDb);
+            Processes.Unknown(oeisDb);
+            Processes.Dead(oeisDb);
+            Processes.MathematicaError(oeisDb);
         }
 
         public static void Main()
         {
             string dbJson = "db.json";
 
-            if ((DateTime.Now - File.GetCreationTime(dbJson)).TotalDays < 2 && false)
-                Console.WriteLine(dbJson + " has been created less then 2 days ago");
+            if (File.Exists(dbJson) && (DateTime.Now - File.GetCreationTime(dbJson)).TotalDays < 2)
+                Console.WriteLine(dbJson + " has been created less then 2 days ago. ");
             else
             {
                 Console.WriteLine("Creating " + dbJson + "...");
