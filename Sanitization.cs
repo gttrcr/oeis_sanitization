@@ -245,9 +245,21 @@ namespace oeis_sanitization
             //Console.WriteLine("Done");
         }
 
-        // public static void Other(List<RDb> oeisDb)
-        // {
+        public static void MaybeNotMore(List<RDb> oeisDb)
+        {
+            Console.WriteLine("Maybenot more...");
+            List<double> lengthOfNonMore = oeisDb.Where(x => x.keyword.Contains("more")).Select(x => (double)x.data.Count).ToList();
+            double avg = lengthOfNonMore.Average();
+            List<RDb> subset = oeisDb.Where(x => x.data.Count > avg && x.keyword.Contains("more")).ToList();
+            MarkdownPage("Sequences with more terms than the average (" + Math.Round(avg, 0) + ") but with 'more' keyword", "maybe_not_more", subset, 3);
+            Console.WriteLine("Done");
+        }
 
+        // public static void Distinct(List<RDb> oeisDb)
+        // {
+        //     List<string> keywords = oeisDb.Select(x => x.keyword).SelectMany(x => x).Distinct().ToList();
+        //     List<string> autors = oeisDb.Select(x => x.author).Distinct().ToList();
+        //     List<int> length = oeisDb.Select(x => x.data.Count).ToList();
         // }
     }
 }

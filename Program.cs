@@ -41,6 +41,10 @@ namespace oeis_sanitization
 
         public static void Sanitization(List<RDb> oeisDb)
         {
+            //my suggestion
+            Processes.MaybeNotMore(oeisDb);
+
+            //standard
             Processes.BrokenLinks(oeisDb);
             Processes.DoneDeprecatedKeyword(oeisDb);
             Processes.DupeDeprecatedKeyword(oeisDb);
@@ -63,7 +67,7 @@ namespace oeis_sanitization
         {
             string dbJson = "db.json";
 
-            if (File.Exists(dbJson) && (DateTime.Now - File.GetCreationTime(dbJson)).TotalDays < 2)
+            if (File.Exists(dbJson) && (DateTime.Now - File.GetCreationTime(dbJson)).TotalDays < 30)
                 Console.WriteLine(dbJson + " has been created less then 2 days ago. ");
             else
             {
