@@ -1,12 +1,12 @@
 using System.IO.Compression;
 using System.Net;
+using System.Text;
+using System.Text.RegularExpressions;
 
-namespace oeis_sanitization
+namespace OeisSanitization
 {
     public static class Utils
     {
-        private static List<HttpStatusCode> _allowedWebResponses = new List<HttpStatusCode>() { HttpStatusCode.Forbidden, HttpStatusCode.Found };
-
         public static void Download(string uri)
         {
             HttpResponseMessage response = new HttpClient().GetAsync(new Uri(uri)).Result;
@@ -71,6 +71,96 @@ namespace oeis_sanitization
             {
                 return false;
             }
+        }
+
+        public static void MarkdownPage(string title, string mdFolder, string mdFile, List<RDb> list, int numberOfColumns, List<List<string>>? options = null, List<string>? optionsName = null)
+        {
+            StringBuilder md = new StringBuilder();
+            md.AppendLine("---");
+            md.AppendLine("layout: page");
+            md.AppendLine("title: " + title);
+            md.AppendLine("---");
+            md.AppendLine();
+            md.AppendLine("There are " + list.Count + " sequences in the table. Last update is " + File.GetCreationTime("db.json"));
+            md.AppendLine();
+
+            if (list.Count > 0)
+            {
+                md.AppendLine(string.Concat(Enumerable.Repeat("|Number|" + (optionsName != null ? string.Join("|", optionsName) + "|" : ""), numberOfColumns)));
+                md.AppendLine(string.Concat(Enumerable.Repeat("|-", (2 + (optionsName != null ? optionsName.Count : 0)) * numberOfColumns - 1)) + "|");
+
+                int i = 0;
+                for (i = 0; i < list.Count; i++)
+                {
+                    for (int n = 0; n < numberOfColumns && i * numberOfColumns + n < list.Count; n++)
+                    {
+                        md.Append(list[i * numberOfColumns + n].ToString());
+                        if (options != null)
+                            md.Append(string.Join(", ", options[i * numberOfColumns + n]) + "|");
+                    }
+
+                    md.AppendLine();
+                }
+            }
+
+            if (!Directory.Exists("oeis_mds"))
+            {
+                Directory.CreateDirectory("oeis_mds");
+                Directory.CreateDirectory("oeis_mds/" + mdFolder);
+            }
+
+            if (!Directory.Exists("oeis_mds/" + mdFolder))
+                Directory.CreateDirectory("oeis_mds/" + mdFolder);
+
+            File.WriteAllText("oeis_mds/" + mdFolder + "/" + mdFile + ".md", md.ToString());
+        }
+
+        public static List<string> LinkExtractor(string str)
+        {
+            Regex extractDateRegex = new Regex("https?:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)");
+            return extractDateRegex.Matches(str).Cast<Match>().Select(m => m.Value).ToList();
+        }
+
+        public static List<string> LinkExtractor(List<string> list)
+        {
+            return LinkExtractor(string.Join("", list));
+        }
+
+        public static List<string> AllLinks(RDb rDb)
+        {
+            List<string> list = new List<string>();
+            list.AddRange(LinkExtractor(rDb.id));
+            list.AddRange(LinkExtractor(rDb.data));
+            list.AddRange(LinkExtractor(rDb.name));
+            list.AddRange(LinkExtractor(rDb.comment));
+            list.AddRange(LinkExtractor(rDb.reference));
+            list.AddRange(LinkExtractor(rDb.link));
+            list.AddRange(LinkExtractor(rDb.formula));
+            list.AddRange(LinkExtractor(rDb.example));
+            list.AddRange(LinkExtractor(rDb.maple));
+            list.AddRange(LinkExtractor(rDb.mathematica));
+            list.AddRange(LinkExtractor(rDb.program));
+            list.AddRange(LinkExtractor(rDb.xref));
+            list.AddRange(LinkExtractor(rDb.offset));
+            list.AddRange(LinkExtractor(rDb.author));
+            list.AddRange(LinkExtractor(rDb.keyword));
+
+            return list;
+        }
+
+        public static List<string> BrokenLinks(List<string> links)
+        {
+            List<string> ret = new List<string>();
+            Parallel.ForEach(links, new ParallelOptions() { MaxDegreeOfParallelism = 8 }, link =>
+            {
+                if (!link.ToLower().Contains("arxiv.org") && !Utils.IsLinkWorking(link))
+                {
+                    Console.WriteLine(link);
+                    ret.Add(link);
+                }
+            });
+
+            return ret;
         }
     }
 }
