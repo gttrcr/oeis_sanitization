@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace oeis_sanitization
+namespace OeisSanitization
 {
     public class Program
     {
@@ -39,28 +39,33 @@ namespace oeis_sanitization
             File.WriteAllText(dbJson, str);
         }
 
-        public static void Sanitization(List<RDb> oeisDb)
+        public static void Work(List<RDb> oeisDb)
         {
-            //my suggestion
-            Processes.MaybeNotMore(oeisDb);
+            //suggestions
+            Sanitization.Suggestion.MaybeNotMore(oeisDb);
+            Sanitization.Suggestion.MaybeMore(oeisDb);
+
+            //interesting things
+            Sanitization.Interesting.MostProductive(oeisDb);
 
             //standard
-            Processes.BrokenLinks(oeisDb);
-            Processes.DoneDeprecatedKeyword(oeisDb);
-            Processes.DupeDeprecatedKeyword(oeisDb);
-            Processes.HugeDeprecatedKeyword(oeisDb);
-            Processes.LookDeprecatedKeyword(oeisDb);
-            Processes.PartDeprecatedKeyword(oeisDb);
-            Processes.UnedSequences(oeisDb);
-            Processes.ObscDeprecatedKeyword(oeisDb);
-            Processes.NeedMoreTerms(oeisDb);
-            Processes.Allocated(oeisDb);
-            Processes.MapleCode(oeisDb);
-            Processes.MathematicaCode(oeisDb);
-            Processes.SomeExamples(oeisDb);
-            Processes.Unknown(oeisDb);
-            Processes.Dead(oeisDb);
-            Processes.MathematicaError(oeisDb);
+            Sanitization.Standard.BrokenLinks(oeisDb);
+            Sanitization.Standard.DoneDeprecatedKeyword(oeisDb);
+            Sanitization.Standard.DoneDeprecatedKeyword(oeisDb);
+            Sanitization.Standard.DupeDeprecatedKeyword(oeisDb);
+            Sanitization.Standard.HugeDeprecatedKeyword(oeisDb);
+            Sanitization.Standard.LookDeprecatedKeyword(oeisDb);
+            Sanitization.Standard.PartDeprecatedKeyword(oeisDb);
+            Sanitization.Standard.UnedSequences(oeisDb);
+            Sanitization.Standard.ObscDeprecatedKeyword(oeisDb);
+            Sanitization.Standard.NeedMoreTerms(oeisDb);
+            Sanitization.Standard.Allocated(oeisDb);
+            Sanitization.Standard.MapleCode(oeisDb);
+            Sanitization.Standard.MathematicaCode(oeisDb);
+            Sanitization.Standard.SomeExamples(oeisDb);
+            Sanitization.Standard.Unknown(oeisDb);
+            Sanitization.Standard.Dead(oeisDb);
+            Sanitization.Standard.MathematicaError(oeisDb);
         }
 
         public static void Main()
@@ -132,7 +137,7 @@ namespace oeis_sanitization
             }
             Console.WriteLine("Done");
 
-            Sanitization(oeisDb);
+            Work(oeisDb);
         }
     }
 }

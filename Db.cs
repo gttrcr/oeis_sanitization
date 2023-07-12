@@ -1,4 +1,4 @@
-namespace oeis_sanitization
+namespace OeisSanitization
 {
     public class Db
     {
