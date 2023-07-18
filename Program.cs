@@ -135,6 +135,8 @@ namespace OeisSanitization
 
                 oeisDb.Add(ret);
             }
+            
+            File.WriteAllText("restrictive_db.json", JsonConvert.SerializeObject(oeisDb));
             Console.WriteLine("Done");
 
             Work(oeisDb);
